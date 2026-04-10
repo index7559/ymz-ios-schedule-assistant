@@ -43,7 +43,7 @@ struct Schedule: Identifiable, Codable, Equatable {
 
 // MARK: - Pending Schedule (local only)
 
-struct PendingSchedule: Identifiable, Codable {
+struct PendingSchedule: Identifiable, Codable, Equatable {
     let id: String
     var sessionId: String
     var title: String

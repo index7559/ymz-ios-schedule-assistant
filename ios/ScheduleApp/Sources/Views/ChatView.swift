@@ -11,9 +11,7 @@ struct ChatView: View {
                 statusBar
 
                 // Main content
-                if case .showingOptions(let options) = viewModel.chatState {
-                    optionsView(options)
-                } else if case .processing = viewModel.chatState {
+                if case .processing = viewModel.chatState {
                     processingView
                 } else if case .error(let message) = viewModel.chatState {
                     errorView(message)
@@ -22,6 +20,11 @@ struct ChatView: View {
                 }
 
                 Spacer()
+
+                // Toast view
+                if case .toast = viewModel.chatState {
+                    toastView
+                }
 
                 // Input area
                 inputArea
@@ -64,6 +67,7 @@ struct ChatView: View {
         case .listening: return .red
         case .processing: return .orange
         case .showingOptions: return .green
+        case .toast: return .green
         case .error: return .red
         }
     }
@@ -72,8 +76,9 @@ struct ChatView: View {
         switch viewModel.chatState {
         case .idle: return "准备就绪"
         case .listening: return "正在聆听..."
-        case .processing: return "正在分析..."
+        case .processing: return "正在理解..."
         case .showingOptions: return "已生成日程选项"
+        case .toast: return viewModel.toastMessage
         case .error(let msg): return "错误: \(msg)"
         }
     }
@@ -99,33 +104,6 @@ struct ChatView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    // MARK: - Options View
-
-    private func optionsView(_ options: [LLMOptions]) -> some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                Text("请确认日程安排")
-                    .font(.headline)
-                    .padding(.top)
-
-                ForEach(Array(options.enumerated()), id: \.offset) { index, option in
-                    OptionCard(option: option, index: index + 1) {
-                        Task {
-                            await viewModel.selectOption(option)
-                        }
-                    }
-                }
-
-                Button("取消") {
-                    viewModel.dismissOptions()
-                }
-                .foregroundColor(.secondary)
-                .padding(.bottom)
-            }
-            .padding(.horizontal)
-        }
     }
 
     // MARK: - Processing View
@@ -174,6 +152,50 @@ struct ChatView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: - Toast View
+
+    private var toastView: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 16) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                    .font(.title2)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(viewModel.toastMessage)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+
+                    if !viewModel.toastSchedules.isEmpty {
+                        Text(viewModel.toastSchedules.map { $0.title }.joined(separator: "、"))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+
+                Spacer()
+
+                Button("撤销") {
+                    viewModel.undoToast()
+                }
+                .font(.subheadline)
+                .foregroundColor(.red)
+
+                Button("详情") {
+                    viewModel.dismissToast()
+                }
+                .font(.subheadline)
+                .foregroundColor(.blue)
+            }
+            .padding()
+            .background(Color(.systemBackground))
+            .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: -5)
+        }
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+        .animation(.spring(), value: viewModel.chatState)
     }
 
     // MARK: - Input Area

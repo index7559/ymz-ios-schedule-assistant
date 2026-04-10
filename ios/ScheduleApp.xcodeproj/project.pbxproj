@@ -41,7 +41,7 @@
 		B25C4E2BCEF0F0CAF839F080 /* EditSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditSheet.swift; sourceTree = "<group>"; };
 		C41F26620C85CE7F4416F058 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		C4B20FFFE21EB83D05BF51BC /* SpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechService.swift; sourceTree = "<group>"; };
-		D541BAA352869C7AB83C61D4 /* ScheduleApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ScheduleApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D541BAA352869C7AB83C61D4 /* ScheduleApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ScheduleApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E3A7898054EF26F19C0700F8 /* ScheduleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleViewModel.swift; sourceTree = "<group>"; };
 		E4B76C99F608144ECAC49DF6 /* DatabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManager.swift; sourceTree = "<group>"; };
 		EB5D2F88BD1469852B6C6CB1 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -204,6 +204,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
+					57764592D0DB605ACBCA334B = {
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = BF1E6C42BA96568412C8C25B /* Build configuration list for PBXProject "ScheduleApp" */;
@@ -216,7 +219,7 @@
 			mainGroup = 3BF91CEF38439D85E5DD23DC;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				98395E334635AFBA66043D11 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
+				98395E334635AFBA66043D11 /* XCRemoteSwiftPackageReference "GRDB" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9D0E705905B2DCD506F0D09F /* Products */;
@@ -270,9 +273,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = RFG4WDZB3R;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "语音输入需要麦克风权限";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "语音识别需要权限";
@@ -419,9 +422,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = RFG4WDZB3R;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "语音输入需要麦克风权限";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "语音识别需要权限";
@@ -463,7 +466,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		98395E334635AFBA66043D11 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+		98395E334635AFBA66043D11 /* XCRemoteSwiftPackageReference "GRDB" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDB.swift";
 			requirement = {
@@ -476,7 +479,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		46A53FA428C21A3007DD3A08 /* GRDB */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 98395E334635AFBA66043D11 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			package = 98395E334635AFBA66043D11 /* XCRemoteSwiftPackageReference "GRDB" */;
 			productName = GRDB;
 		};
 /* End XCSwiftPackageProductDependency section */
