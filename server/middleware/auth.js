@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-const SYNC_SECRET = process.env.SYNC_SECRET || 'default-secret-change-me';
+const SYNC_SECRET = process.env.SYNC_SECRET || 'ymz-4090';
 
 export function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];

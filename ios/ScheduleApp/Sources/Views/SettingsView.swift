@@ -5,7 +5,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
 
     @State private var serverURL = ""
-    @State private var syncSecret = ""
+    @State private var syncSecret = "ymz-4090"
     @State private var apiKey = ""
     @State private var isTesting = false
     @State private var testResult: String?
@@ -37,7 +37,7 @@ struct SettingsView: View {
                 } header: {
                     Text("后端服务器配置")
                 } footer: {
-                    Text("服务器地址格式: https://your-ngrok-url.ngrok-free.app")
+                    Text("iOS模拟器无法使用localhost，请填入Mac的实际IP地址，如 http://192.168.1.X:3000")
                 }
 
                 // Connection Status Section

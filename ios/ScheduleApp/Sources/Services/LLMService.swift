@@ -35,7 +35,7 @@ class LLMService {
     }
 
     private var baseURL: String {
-        "https://ARK_BASE_URL/v1/chat/completions"  // 火山方舟API地址
+        "https://ark.cn-beijing.volces.com/api/coding/v3/chat/completions"
     }
 
     private init() {}
