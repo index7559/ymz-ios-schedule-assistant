@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+
+# Xcode
+ios/*.xcodeproj/project.xcworkspace/
+ios/build/
+ios/*.xcworkspace/
+ios/Pods/
+ios/*.xcuserstate/
+ios/.swiftpm/
+
+# Node.js
+server/node_modules/
+server/*.log
+
+# Environment
+.env
+.env.local
+
+# ngrok
+ngrok.yml
+
+# iOS Simulator
+*.ipa
+*.app.dSYM
