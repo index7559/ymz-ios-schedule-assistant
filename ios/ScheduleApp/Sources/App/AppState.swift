@@ -1,14 +1,10 @@
-import SwiftUI
+import Foundation
 import Combine
 
 @MainActor
 class AppState: ObservableObject {
     @Published var isConfigured: Bool = false
-    @Published var serverURL: String = ""
-    @Published var syncSecret: String = ""
     @Published var deviceId: String = UUID().uuidString
-    @Published var isOnline: Bool = true
-    @Published var syncStatus: SyncStatus = .idle
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -17,37 +13,17 @@ class AppState: ObservableObject {
     }
 
     func loadConfiguration() {
-        serverURL = UserDefaults.standard.string(forKey: "serverURL") ?? ""
-        syncSecret = KeychainHelper.getSyncSecret() ?? ""
-        isConfigured = !serverURL.isEmpty && !syncSecret.isEmpty
-    }
-
-    func saveConfiguration(serverURL: String, syncSecret: String) {
-        UserDefaults.standard.set(serverURL, forKey: "serverURL")
-        try? KeychainHelper.saveSyncSecret(syncSecret)
-        self.serverURL = serverURL
-        self.syncSecret = syncSecret
-        isConfigured = true
-    }
-
-    func checkConnection() async {
-        guard !serverURL.isEmpty else {
-            isOnline = false
-            return
+        deviceId = UserDefaults.standard.string(forKey: "deviceId") ?? UUID().uuidString
+        if deviceId.isEmpty {
+            deviceId = UUID().uuidString
+            UserDefaults.standard.set(deviceId, forKey: "deviceId")
         }
-
-        do {
-            let pong = try await APIService.shared.ping()
-            isOnline = pong.status == "ok"
-        } catch {
-            isOnline = false
-        }
+        // isConfigured: app is ready if API key exists in Keychain
+        isConfigured = KeychainHelper.getAPIKey() != nil
     }
-}
 
-enum SyncStatus: Equatable {
-    case idle
-    case syncing
-    case success
-    case failed(String)
+    func saveConfiguration() {
+        // API key is saved directly via KeychainHelper in SettingsView
+        isConfigured = KeychainHelper.getAPIKey() != nil
+    }
 }

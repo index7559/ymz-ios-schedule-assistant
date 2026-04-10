@@ -30,20 +30,6 @@ final class KeychainHelper {
         try delete(key: "api_key")
     }
 
-    // MARK: - Sync Secret
-
-    static func saveSyncSecret(_ secret: String) throws {
-        try save(key: "sync_secret", value: secret)
-    }
-
-    static func getSyncSecret() -> String? {
-        return get(key: "sync_secret")
-    }
-
-    static func deleteSyncSecret() throws {
-        try delete(key: "sync_secret")
-    }
-
     // MARK: - Private
 
     private static func save(key: String, value: String) throws {

@@ -17,6 +17,12 @@ struct ToastData: Equatable {
     let undoId: String
 }
 
+/// Actions triggered when toast is dismissed
+enum ToastDismissAction: Equatable {
+    case none
+    case viewDetails  // User tapped "详情" — switch to calendar tab
+}
+
 // MARK: - Chat View Model
 
 @MainActor
@@ -30,6 +36,7 @@ class ChatViewModel: ObservableObject {
     @Published var toastMessage: String = ""
     @Published var toastSchedules: [PendingSchedule] = []
     @Published var toastUndoId: String = ""
+    @Published var dismissAction: ToastDismissAction = .none
 
     let speechService = SpeechService.shared
     private let llmService = LLMService.shared
@@ -148,8 +155,6 @@ class ChatViewModel: ObservableObject {
             do {
                 try databaseManager.saveSchedule(schedule)
                 createdSchedules.append(schedule)
-                // Trigger sync
-                await syncSchedule(schedule)
             } catch {
                 print("Failed to save schedule: \(error)")
             }
@@ -168,6 +173,9 @@ class ChatViewModel: ObservableObject {
         toastUndoId = undoId
         chatState = .toast(ToastData(schedules: createdSchedules, undoId: undoId))
 
+        // Trigger list refresh via ContentView's onChange(scheduleCreated)
+        scheduleCreated = true
+
         // Schedule auto-dismiss after 5 seconds
         scheduleAutoDismiss(undoId: undoId)
     }
@@ -177,18 +185,26 @@ class ChatViewModel: ObservableObject {
             try? await Task.sleep(nanoseconds: 5_000_000_000) // 5 seconds
             await MainActor.run {
                 if self.toastUndoId == undoId {
-                    self.dismissToast()
+                    self.dismissToast(action: .none)
                 }
             }
         }
     }
 
-    func dismissToast() {
+    func dismissToast(action: ToastDismissAction = .none) {
+        dismissAction = action
         toastMessage = ""
         toastSchedules = []
         toastUndoId = ""
         if case .toast = chatState {
             chatState = .idle
+        }
+        // Reset action after a short delay so the same action can be triggered again
+        Task {
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            await MainActor.run {
+                self.dismissAction = .none
+            }
         }
     }
 
@@ -197,6 +213,8 @@ class ChatViewModel: ObservableObject {
         for schedule in toastSchedules {
             try? databaseManager.deleteSchedule(id: schedule.id)
         }
+        // Trigger list refresh to show updated state after deletion
+        scheduleCreated = true
         dismissToast()
     }
 
@@ -232,38 +250,8 @@ class ChatViewModel: ObservableObject {
                let lastInput = inputs.last {
                 try? databaseManager.markPendingInputProcessed(id: lastInput.id)
             }
-
-            // Trigger sync
-            await syncSchedule(schedule)
         } catch {
             chatState = .error("保存失败: \(error.localizedDescription)")
-        }
-    }
-
-    // MARK: - Sync
-
-    private func syncSchedule(_ schedule: PendingSchedule) async {
-        do {
-            try await APIService.shared.createSchedule(
-                Schedule(
-                    id: schedule.id,
-                    title: schedule.title,
-                    location: schedule.location,
-                    notes: schedule.notes,
-                    startTime: schedule.startTime,
-                    endTime: schedule.endTime,
-                    reminderTime: schedule.reminderTime,
-                    timezone: "Asia/Shanghai",
-                    repeatRule: schedule.repeatRule,
-                    isCompleted: schedule.isCompleted,
-                    createdAt: schedule.createdAt,
-                    updatedAt: schedule.updatedAt
-                )
-            )
-            try databaseManager.markScheduleSynced(id: schedule.id)
-        } catch {
-            print("Sync failed: \(error)")
-            // Will retry on next sync
         }
     }
 

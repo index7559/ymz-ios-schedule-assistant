@@ -21,21 +21,19 @@ struct ScheduleListView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        Task {
-                            await viewModel.syncWithServer()
-                        }
+                        viewModel.loadSchedules()
                     } label: {
                         if viewModel.isLoading {
                             ProgressView()
                         } else {
-                            Image(systemName: "arrow.triangle.2.circlepath")
+                            Image(systemName: "arrow.clockwise")
                         }
                     }
                     .disabled(viewModel.isLoading)
                 }
             }
             .refreshable {
-                await viewModel.syncWithServer()
+                viewModel.loadSchedules()
             }
             .sheet(item: $scheduleToEdit) { schedule in
                 EditSheet(schedule: schedule, viewModel: viewModel)
@@ -163,13 +161,6 @@ struct ScheduleRow: View {
                 }
 
                 Spacer()
-
-                // Sync status
-                if !schedule.isSynced {
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                        .font(.caption)
-                        .foregroundColor(.orange)
-                }
             }
             .padding(.vertical, 4)
         }

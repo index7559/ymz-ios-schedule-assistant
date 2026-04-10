@@ -44,5 +44,10 @@ struct ContentView: View {
                 chatViewModel.resetScheduleCreated()
             }
         }
+        .onChange(of: chatViewModel.dismissAction) { action in
+            if action == .viewDetails {
+                selectedTab = 2  // Switch to calendar tab
+            }
+        }
     }
 }

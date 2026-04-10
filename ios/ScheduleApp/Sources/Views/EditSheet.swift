@@ -105,25 +105,6 @@ struct EditSheet: View {
             viewModel.loadSchedules()
 
             // Sync with server
-            Task {
-                try? await APIService.shared.updateSchedule(
-                    Schedule(
-                        id: updated.id,
-                        title: updated.title,
-                        location: updated.location,
-                        notes: updated.notes,
-                        startTime: updated.startTime,
-                        endTime: updated.endTime,
-                        reminderTime: updated.reminderTime,
-                        timezone: "Asia/Shanghai",
-                        repeatRule: updated.repeatRule,
-                        isCompleted: updated.isCompleted,
-                        createdAt: updated.createdAt,
-                        updatedAt: updated.updatedAt
-                    )
-                )
-            }
-
             dismiss()
         } catch {
             print("Failed to update schedule: \(error)")

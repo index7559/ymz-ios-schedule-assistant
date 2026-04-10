@@ -28,12 +28,22 @@ final class DatabaseManager {
             dbQueue = try DatabaseQueue(path: dbURL.path)
             try createTables()
         } catch {
-            print("Database setup failed: \(error)")
+            print("FATAL: Database setup failed: \(error). All DB operations will fail!")
         }
     }
 
+    /// Returns the database queue, throwing if not initialized
+    private func getDB() throws -> DatabaseQueue {
+        guard let db = dbQueue else {
+            let error = NSError(domain: "DatabaseManager", code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Database not initialized. GRDB setup failed — check console for errors."])
+            throw error
+        }
+        return db
+    }
+
     private func createTables() throws {
-        try dbQueue?.write { db in
+        try getDB().write { db in
             // Schedules table
             try db.execute(sql: """
                 CREATE TABLE IF NOT EXISTS schedules (
@@ -82,7 +92,7 @@ final class DatabaseManager {
     // MARK: - Schedules
 
     func saveSchedule(_ schedule: PendingSchedule) throws {
-        try dbQueue?.write { db in
+        try getDB().write { db in
             try db.execute(sql: """
                 INSERT OR REPLACE INTO schedules
                 (id, sessionId, title, location, notes, startTime, endTime, reminderTime, repeatRule, isCompleted, isSynced, createdAt, updatedAt)
@@ -106,7 +116,7 @@ final class DatabaseManager {
     }
 
     func getSchedules(for sessionId: String) throws -> [PendingSchedule] {
-        try dbQueue?.read { db in
+        try getDB().read { db in
             let rows = try Row.fetchAll(db, sql: """
                 SELECT * FROM schedules WHERE sessionId = ? ORDER BY startTime ASC
             """, arguments: [sessionId])
@@ -127,11 +137,11 @@ final class DatabaseManager {
                     updatedAt: row["updatedAt"]
                 )
             }
-        } ?? []
+        }
     }
 
     func getAllSchedules() throws -> [PendingSchedule] {
-        try dbQueue?.read { db in
+        try getDB().read { db in
             let rows = try Row.fetchAll(db, sql: "SELECT * FROM schedules ORDER BY startTime ASC")
             return rows.map { row in
                 PendingSchedule(
@@ -150,11 +160,11 @@ final class DatabaseManager {
                     updatedAt: row["updatedAt"]
                 )
             }
-        } ?? []
+        }
     }
 
     func getUnsyncedSchedules() throws -> [PendingSchedule] {
-        try dbQueue?.read { db in
+        try getDB().read { db in
             let rows = try Row.fetchAll(db, sql: "SELECT * FROM schedules WHERE isSynced = 0")
             return rows.map { row in
                 PendingSchedule(
@@ -173,17 +183,17 @@ final class DatabaseManager {
                     updatedAt: row["updatedAt"]
                 )
             }
-        } ?? []
+        }
     }
 
     func markScheduleSynced(id: String) throws {
-        try dbQueue?.write { db in
+        try getDB().write { db in
             try db.execute(sql: "UPDATE schedules SET isSynced = 1 WHERE id = ?", arguments: [id])
         }
     }
 
     func deleteSchedule(id: String) throws {
-        try dbQueue?.write { db in
+        try getDB().write { db in
             try db.execute(sql: "DELETE FROM schedules WHERE id = ?", arguments: [id])
         }
     }
@@ -195,7 +205,7 @@ final class DatabaseManager {
     // MARK: - Pending Inputs
 
     func savePendingInput(_ input: PendingInput) throws {
-        try dbQueue?.write { db in
+        try getDB().write { db in
             try db.execute(sql: """
                 INSERT OR REPLACE INTO pendingInputs (id, sessionId, userInput, isProcessed, createdAt)
                 VALUES (?, ?, ?, ?, ?)
@@ -210,7 +220,7 @@ final class DatabaseManager {
     }
 
     func getPendingInputs(for sessionId: String) throws -> [PendingInput] {
-        try dbQueue?.read { db in
+        try getDB().read { db in
             let rows = try Row.fetchAll(db, sql: """
                 SELECT * FROM pendingInputs WHERE sessionId = ? AND isProcessed = 0 ORDER BY createdAt ASC
             """, arguments: [sessionId])
@@ -223,17 +233,17 @@ final class DatabaseManager {
                     createdAt: row["createdAt"]
                 )
             }
-        } ?? []
+        }
     }
 
     func markPendingInputProcessed(id: String) throws {
-        try dbQueue?.write { db in
+        try getDB().write { db in
             try db.execute(sql: "UPDATE pendingInputs SET isProcessed = 1 WHERE id = ?", arguments: [id])
         }
     }
 
     func deletePendingInput(id: String) throws {
-        try dbQueue?.write { db in
+        try getDB().write { db in
             try db.execute(sql: "DELETE FROM pendingInputs WHERE id = ?", arguments: [id])
         }
     }
@@ -241,7 +251,7 @@ final class DatabaseManager {
     // MARK: - Sessions
 
     func saveSession(_ session: Session) throws {
-        try dbQueue?.write { db in
+        try getDB().write { db in
             try db.execute(sql: """
                 INSERT OR REPLACE INTO sessions (id, lastActiveAt) VALUES (?, ?)
             """, arguments: [session.id, session.lastActiveAt])
@@ -249,7 +259,7 @@ final class DatabaseManager {
     }
 
     func getSession(id: String) throws -> Session? {
-        try dbQueue?.read { db in
+        try getDB().read { db in
             if let row = try Row.fetchOne(db, sql: "SELECT * FROM sessions WHERE id = ?", arguments: [id]) {
                 return Session(id: row["id"], lastActiveAt: row["lastActiveAt"])
             }
@@ -258,7 +268,7 @@ final class DatabaseManager {
     }
 
     func updateSessionLastActive(id: String) throws {
-        try dbQueue?.write { db in
+        try getDB().write { db in
             try db.execute(
                 sql: "UPDATE sessions SET lastActiveAt = ? WHERE id = ?",
                 arguments: [Int64(Date().timeIntervalSince1970), id]
@@ -268,11 +278,11 @@ final class DatabaseManager {
 
     func getOrCreateSession() throws -> Session {
         // Check for existing session
-        let rows: [Row]? = try dbQueue?.read { db in
+        let rows: [Row] = try getDB().read { db in
             try Row.fetchAll(db, sql: "SELECT * FROM sessions ORDER BY lastActiveAt DESC")
         }
 
-        if let sessions = rows, let lastSession = sessions.first {
+        if let lastSession = rows.first {
             let lastActive = Date(timeIntervalSince1970: TimeInterval(lastSession["lastActiveAt"] as Int64))
             let hoursSinceActive = Date().timeIntervalSince(lastActive) / 3600
 
@@ -295,14 +305,14 @@ final class DatabaseManager {
 
     func cleanupOldSessions() throws {
         let cutoff = Int64(Date().timeIntervalSince1970) - (72 * 3600)
-        try dbQueue?.write { db in
+        try getDB().write { db in
             try db.execute(sql: "DELETE FROM sessions WHERE lastActiveAt < ?", arguments: [cutoff])
         }
     }
 
     func cleanupOldPendingInputs() throws {
         let cutoff = Int64(Date().timeIntervalSince1970) - (24 * 3600)
-        try dbQueue?.write { db in
+        try getDB().write { db in
             try db.execute(
                 sql: "DELETE FROM pendingInputs WHERE createdAt < ? AND isProcessed = 1",
                 arguments: [cutoff]

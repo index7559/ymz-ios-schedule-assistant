@@ -4,12 +4,7 @@ struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) var dismiss
 
-    @State private var serverURL = ""
-    @State private var syncSecret = "ymz-4090"
     @State private var apiKey = ""
-    @State private var isTesting = false
-    @State private var testResult: String?
-    @State private var showTestSuccess = false
 
     var body: some View {
         NavigationStack {
@@ -23,48 +18,6 @@ struct SettingsView: View {
                     Text("LLM API 配置")
                 } footer: {
                     Text("输入你的火山方舟 API Key，用于 AI 语义理解")
-                }
-
-                // Server Configuration Section
-                Section {
-                    TextField("服务器地址", text: $serverURL)
-                        .textContentType(.URL)
-                        .autocapitalization(.none)
-                        .keyboardType(.URL)
-
-                    SecureField("同步密钥 (SYNC_SECRET)", text: $syncSecret)
-                        .textContentType(.password)
-                } header: {
-                    Text("后端服务器配置")
-                } footer: {
-                    Text("iOS模拟器无法使用localhost，请填入Mac的实际IP地址，如 http://192.168.1.X:3000")
-                }
-
-                // Connection Status Section
-                Section {
-                    Button {
-                        Task {
-                            await testConnection()
-                        }
-                    } label: {
-                        HStack {
-                            Text("测试连接")
-                            Spacer()
-                            if isTesting {
-                                ProgressView()
-                            } else if showTestSuccess {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.green)
-                            }
-                        }
-                    }
-                    .disabled(isTesting || serverURL.isEmpty || syncSecret.isEmpty)
-
-                    if let result = testResult {
-                        Text(result)
-                            .font(.caption)
-                            .foregroundColor(result.contains("成功") ? .green : .red)
-                    }
                 }
 
                 // App Info Section
@@ -100,7 +53,7 @@ struct SettingsView: View {
                     Button("保存") {
                         saveSettings()
                     }
-                    .disabled(serverURL.isEmpty || syncSecret.isEmpty || apiKey.isEmpty)
+                    .disabled(apiKey.isEmpty)
                 }
             }
             .onAppear {
@@ -110,8 +63,6 @@ struct SettingsView: View {
     }
 
     private func loadCurrentSettings() {
-        serverURL = appState.serverURL
-        syncSecret = appState.syncSecret
         apiKey = KeychainHelper.getAPIKey() ?? ""
     }
 
@@ -123,42 +74,7 @@ struct SettingsView: View {
             print("Failed to save API Key: \(error)")
         }
 
-        // Save server config
-        appState.saveConfiguration(serverURL: serverURL, syncSecret: syncSecret)
-
-        // Test connection
-        Task {
-            await testConnection()
-        }
-    }
-
-    private func testConnection() async {
-        isTesting = true
-        testResult = nil
-        showTestSuccess = false
-
-        do {
-            // Temporarily save settings for testing
-            UserDefaults.standard.set(serverURL, forKey: "serverURL")
-            try? KeychainHelper.saveSyncSecret(syncSecret)
-
-            // Try ping
-            let pong = try await APIService.shared.ping()
-            if pong.status == "ok" {
-                testResult = "连接成功！"
-                showTestSuccess = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                    if appState.isConfigured {
-                        dismiss()
-                    }
-                }
-            } else {
-                testResult = "服务器响应异常"
-            }
-        } catch {
-            testResult = "连接失败: \(error.localizedDescription)"
-        }
-
-        isTesting = false
+        appState.saveConfiguration()
+        dismiss()
     }
 }

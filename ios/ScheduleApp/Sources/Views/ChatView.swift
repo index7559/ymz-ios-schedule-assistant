@@ -185,7 +185,7 @@ struct ChatView: View {
                 .foregroundColor(.red)
 
                 Button("详情") {
-                    viewModel.dismissToast()
+                    viewModel.dismissToast(action: .viewDetails)
                 }
                 .font(.subheadline)
                 .foregroundColor(.blue)
